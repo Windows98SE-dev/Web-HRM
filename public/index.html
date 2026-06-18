@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Heart Rate Monitor</title>
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+<h1>❤️ Windows98SE-dev's Heart Rate Monitor</h1>
+<div class="container">
+    <p class="subtitle">Real-time heart rate tracking</p>
+
+    <div class="status-indicator">
+      <span class="status-dot" id="connectionDot"></span>
+      <span id="statusText">Connecting...</span>
+    </div>
+
+    <div class="heart-rate-display">
+      <div class="heart-rate-value" id="heartRate">--</div>
+      <div class="heart-rate-label">Beats Per Minute</div>
+    </div>
+
+    <div class="button-group">
+      <button class="btn-primary" id="remindBtn" onclick="sendReminder()">
+        🚨 Tell me to calm down
+      </button>
+    </div>
+
+    <div class="message" id="message"></div>
+
+    <div class="info-box">
+      <strong>ℹ️ How it works:</strong>
+      Click "Tell me to calm down" to have me warned about my heart rate via Discord.
+    </div>
+  </div>
+
+  <script>
+    const heartRateDisplay = document.getElementById('heartRate');
+    const statusText = document.getElementById('statusText');
+    const connectionDot = document.getElementById('connectionDot');
+    const messageBox = document.getElementById('message');
+    const remindBtn = document.getElementById('remindBtn');
+
+    // Connect to WebSocket for live updates
+    function connectWebSocket() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const ws = new WebSocket(`${protocol}//${window.location.host}`);
+
+      ws.onopen = () => {
+        console.log('✅ Connected to server');
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        updateUI(data);
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        showMessage('Connection error. Retrying...', 'error');
+      };
+
+      ws.onclose = () => {
+        console.log('Reconnecting in 3 seconds...');
+        setTimeout(connectWebSocket, 3000);
+      };
+    }
+
+    // Update UI with latest data
+    function updateUI(data) {
+      const { heartRate, isOnline, isConnected } = data;
+
+      // Update heart rate
+      if (heartRate > 0) {
+        heartRateDisplay.textContent = heartRate;
+      } else {
+        heartRateDisplay.textContent = '--';
+      }
+
+      // Update status
+      updateStatus(isConnected, isOnline);
+    }
+
+    // Update status indicator
+    function updateStatus(isConnected, isOnline) {
+      connectionDot.className = 'status-dot';
+      remindBtn.disabled = !isConnected;
+
+      if (isConnected) {
+        connectionDot.classList.add('connected');
+        if (isOnline) {
+          connectionDot.classList.add('online');
+          statusText.textContent = 'Online';
+        } else {
+          statusText.textContent = 'Offline';
+        }
+      } else {
+        statusText.textContent = 'Disconnected';
+      }
+    }
+
+    // Send reminder DM
+    async function sendReminder() {
+      remindBtn.disabled = true;
+      remindBtn.textContent = '⏳ Sending...';
+
+      try {
+        const response = await fetch('/api/send-reminder', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (response.ok) {
+          showMessage('Your DM has been sent!', 'success');
+        } else {
+          const error = await response.json();
+          console.error(`Error: ${error.error}`, 'error');
+        }
+      } catch (error) {
+        console.error(`Error: ${error.message}`, 'error');
+      } finally {
+        remindBtn.disabled = false;
+        remindBtn.textContent = '🚨 Tell me to calm down';
+      }
+    }
+
+    // Refresh heart rate manually
+    async function refreshData() {
+      try {
+        const response = await fetch('/api/heart-rate');
+        const data = await response.json();
+        updateUI(data);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    }
+
+    // Show message
+    function showMessage(text, type) {
+      messageBox.textContent = text;
+      messageBox.className = `message ${type}`;
+      setTimeout(() => {
+        messageBox.className = 'message';
+      }, 5000);
+    }
+
+    // Initialize
+    connectWebSocket();
+    refreshData();
+  </script>
+</body>
+</html>
