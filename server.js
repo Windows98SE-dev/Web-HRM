@@ -134,8 +134,14 @@ app.post('/api/send-reminder', async (req, res) => {
       return res.status(500).json({ error: 'Discord webhook not configured' });
     }
 
+    // Optional sender name, sanitized and capped in length
+    let sender = typeof req.body?.sender === 'string' ? req.body.sender.trim() : '';
+    sender = sender.slice(0, 50);
+
+    const senderLine = sender ? `\n\nSent by: **${sender}**` : '';
+
     const payload = {
-      content: `🚨 **Calm Down!** Your heart rate is **${currentHeartRate} BPM**\n\nTake a deep breath and relax! 💚`,
+      content: `🚨 **Calm Down!** Your heart rate is **${currentHeartRate} BPM**\n\nTake a deep breath and relax! 💚${senderLine}`,
     };
 
     const response = await fetch(webhookUrl, {

@@ -20,6 +20,14 @@
     </div>
 
     <div class="button-group">
+      <input
+        type="text"
+        id="senderInput"
+        placeholder="Your name (optional)"
+        maxlength="50"
+        class="sender-input"
+        style="display:block; margin: 0 auto 10px; padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; font-size: 14px; width: 220px;"
+      />
       <button class="btn-primary" id="remindBtn" onclick="sendReminder()">
         🚨 Tell me to calm down
       </button>
@@ -39,6 +47,7 @@
     const connectionDot = document.getElementById('connectionDot');
     const messageBox = document.getElementById('message');
     const remindBtn = document.getElementById('remindBtn');
+    const senderInput = document.getElementById('senderInput');
 
     // Connect to WebSocket for live updates
     function connectWebSocket() {
@@ -113,6 +122,7 @@
         const response = await fetch('/api/send-reminder', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sender: senderInput.value.trim() }),
         });
 
         if (response.ok) {
