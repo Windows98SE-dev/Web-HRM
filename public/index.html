@@ -83,7 +83,11 @@
     // Update status indicator
     function updateStatus(isConnected, isOnline) {
       connectionDot.className = 'status-dot';
-      remindBtn.disabled = !isConnected;
+
+      // Don't override the button while a cooldown is running
+      if (!cooldownInterval) {
+        remindBtn.disabled = !isConnected;
+      }
 
       if (isConnected) {
         connectionDot.classList.add('connected');
@@ -99,6 +103,8 @@
     }
 
     // Send message to webhook
+    let cooldownInterval = null;
+
     async function sendReminder() {
       remindBtn.disabled = true;
       remindBtn.textContent = '⏳ Sending...';
@@ -111,16 +117,45 @@
 
         if (response.ok) {
           showMessage('Your message has been sent!', 'success');
+          startCooldown(30);
+        } else if (response.status === 429) {
+          const error = await response.json();
+          showMessage(error.message, 'error');
+          startCooldown(error.remaining);
         } else {
           const error = await response.json();
-          console.error(`Error: ${error.error}`, 'error');
+          console.error(`Error: ${error.error}`);
+          showMessage(`Error: ${error.error}`, 'error');
+          remindBtn.disabled = false;
+          remindBtn.textContent = '🚨 Tell me to calm down';
         }
       } catch (error) {
-        console.error(`Error: ${error.message}`, 'error');
-      } finally {
+        console.error(`Error: ${error.message}`);
+        showMessage(`Error: ${error.message}`, 'error');
         remindBtn.disabled = false;
         remindBtn.textContent = '🚨 Tell me to calm down';
       }
+    }
+
+    // Disable the button and show a countdown until it's usable again
+    function startCooldown(seconds) {
+      if (cooldownInterval) clearInterval(cooldownInterval);
+
+      let remaining = seconds;
+      remindBtn.disabled = true;
+      remindBtn.textContent = `⏱️ Wait ${remaining}s...`;
+
+      cooldownInterval = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+          clearInterval(cooldownInterval);
+          cooldownInterval = null;
+          remindBtn.disabled = false;
+          remindBtn.textContent = '🚨 Tell me to calm down';
+        } else {
+          remindBtn.textContent = `⏱️ Wait ${remaining}s...`;
+        }
+      }, 1000);
     }
 
     // Refresh heart rate manually

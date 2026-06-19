@@ -111,8 +111,24 @@ app.get('/api/heart-rate', (req, res) => {
   });
 });
 
+// Cooldown for the reminder webhook (in ms)
+const REMINDER_COOLDOWN_MS = 30 * 1000;
+let lastReminderSentAt = 0;
+
 app.post('/api/send-reminder', async (req, res) => {
   try {
+    const now = Date.now();
+    const elapsed = now - lastReminderSentAt;
+
+    if (elapsed < REMINDER_COOLDOWN_MS) {
+      const remaining = Math.ceil((REMINDER_COOLDOWN_MS - elapsed) / 1000);
+      return res.status(429).json({
+        error: 'cooldown',
+        message: `Please wait ${remaining}s before sending another reminder`,
+        remaining,
+      });
+    }
+
     const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
     if (!webhookUrl) {
       return res.status(500).json({ error: 'Discord webhook not configured' });
@@ -131,6 +147,8 @@ app.post('/api/send-reminder', async (req, res) => {
     if (!response.ok) {
       throw new Error(`Discord webhook error: ${response.statusText}`);
     }
+
+    lastReminderSentAt = now;
 
     res.json({ success: true, message: 'Message sent to Discord!' });
   } catch (error) {
