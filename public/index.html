@@ -7,10 +7,8 @@
   <link rel="stylesheet" href="index.css">
 </head>
 <body>
-<h1>❤️ Windows98SE-dev's Heart Rate Monitor</h1>
+<h1>Windows98SE-dev's Heart Rate Monitor ❤️</h1>
 <div class="container">
-    <p class="subtitle">Real-time heart rate tracking</p>
-
     <div class="status-indicator">
       <span class="status-dot" id="connectionDot"></span>
       <span id="statusText">Connecting...</span>
@@ -48,7 +46,7 @@
       const ws = new WebSocket(`${protocol}//${window.location.host}`);
 
       ws.onopen = () => {
-        console.log('✅ Connected to server');
+        console.log('Connected to server');
       };
 
       ws.onmessage = (event) => {
@@ -67,7 +65,7 @@
       };
     }
 
-    // Update UI with latest data
+    // Update UI
     function updateUI(data) {
       const { heartRate, isOnline, isConnected } = data;
 
@@ -100,7 +98,7 @@
       }
     }
 
-    // Send reminder DM
+    // Send message to webhook
     async function sendReminder() {
       remindBtn.disabled = true;
       remindBtn.textContent = '⏳ Sending...';
@@ -112,7 +110,7 @@
         });
 
         if (response.ok) {
-          showMessage('Your DM has been sent!', 'success');
+          showMessage('Your message has been sent!', 'success');
         } else {
           const error = await response.json();
           console.error(`Error: ${error.error}`, 'error');
@@ -149,5 +147,8 @@
     connectWebSocket();
     refreshData();
   </script>
+  <footer>
+    <a href="https://github.com/Windows98SE-dev/Web-HRM.git" target="_blank">View on GitHub</a>
+  </footer>
 </body>
 </html>
