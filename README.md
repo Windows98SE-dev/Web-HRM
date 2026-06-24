@@ -29,17 +29,22 @@ Get these from:
 Edit `.env`:
 ```
 PULSOID_TOKEN=paste_your_token_here
-DISCORD_BOT_TOKEN=paste_your_bot_token_here
+DISCORD_WEBHOOK=paste_your_bot_token_here
 DISCORD_USER_ID=paste_your_user_id_here
 PORT=3000
 ```
 
-### Step 4: Start the server
+### Step 4 : Install dependencies
+```bash
+npm install
+```
+
+### Step 5: Start the server
 ```bash
 npm run dev
 ```
 
-### Step 5: Open in browser
+### Step 6: Open in browser
 Go to http://localhost:YOUR_PORT
 
 ## Projects used
@@ -62,4 +67,3 @@ Go to http://localhost:YOUR_PORT
 2. Backend gets your current heart rate from Pulsoid (Example : 85 BPM)
 3. Backend sends you a Discord message with your heart rate
 4. You get: "🚨 Calm Down! Your heart rate is 85 BPM"
-
